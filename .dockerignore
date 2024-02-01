@@ -1,0 +1,10 @@
+.git/
+
+build
+dist
+*.egg-info
+.eggs
+
+__pycache__
+
+node_modules
