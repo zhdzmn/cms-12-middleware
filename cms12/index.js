@@ -12,6 +12,7 @@ function _getConfigFromENV() {
     CMS12_CLIENT_SECRET: process.env.CMS12_CLIENT_SECRET,
     APP_CLIENT_ID: process.env.APP_CLIENT_ID,
     APP_CLIENT_SECRET: process.env.APP_CLIENT_SECRET,
+    PREVIEW_ALIVE_TIMEOUT: process.env.PREVIEW_ALIVE_TIMEOUT,
   };
 }
 
@@ -156,12 +157,12 @@ export async function generatePreview(req, res) {
     },
   });
 
-  // // remove preview page
-  // setTimeout(async () => {
-  //   cms12.deleteContent(guidValue).then(() => {
-  //     appLogger.info('removed preview completed');
-  //   }).catch(err => appLogger.error({err}, 'failed to remove the post'));
-  // }, 30000);
+  // remove preview page
+  setTimeout(async () => {
+    cms12.deleteContent(guidValue).then(() => {
+      appLogger.info('removed preview completed');
+    }).catch(err => appLogger.error({err}, 'failed to remove the post'));
+  }, config.PREVIEW_ALIVE_TIMEOUT * 1000);
 
   appLogger.info('preview completed');
   return res.status(200).json({success: true});
