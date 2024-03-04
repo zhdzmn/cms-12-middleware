@@ -11,59 +11,56 @@ function mergeTokenData(listResults) {
   return returnVal;
 }
 
-export async function prepareCMSData(fieldValues, valueMapping, token) {
+export async function prepareCMSData(fieldValues, valueMapping, apiToken) {
   if (!fieldValues) { return; }
   const results = await Promise.all(Object.entries(valueMapping).map(
     async ([attr, attrSchema]) => {
-      const activeIndex = attrSchema.valIndex ?? 0;
-      if (attrSchema._type === 'List') {
-        const listResults = await Promise.all(attrSchema.maps.map((vMapping, index) => {
+      if (attrSchema.behaviour === 'List') {
+        const listResults = await Promise.all(attrSchema.elements.map((_attrSchema, index) => {
           return prepareCMSData(
             fieldValues,
-            {[attr]: {...vMapping, valIndex: index}},
-            token
+            {[attr]: {..._attrSchema, _type: attrSchema._type, valIndex: index}},
+            apiToken
           );
         }));
         return mergeTokenData(listResults);
       }
+      const activeFieldValue = fieldValues[attr]?.[0].field_values?.[attrSchema.valIndex ?? 0];
       if (attrSchema._type === 'Component') {
-        const listResults = await Promise.all(Object.entries(attrSchema.map).map(([cms12FieldName, fieldConfig]) => {
+        const listResults = await Promise.all(Object.entries(attrSchema.map).map(([_attr, _attrSchema]) => {
           return prepareCMSData(
-            fieldValues[attr]?.[0].field_values?.[activeIndex]?.content_details.latest_fields_version?.fields,
-            {[cms12FieldName]: fieldConfig},
-            token
+            activeFieldValue?.content_details.latest_fields_version?.fields,
+            {[_attr]: _attrSchema},
+            apiToken
           );
         }));
         return mergeTokenData(listResults);
       }
       if (attrSchema._type === 'TextField') {
         return {
-          [attr]: {value: fieldValues[attrSchema.attr]?.[0].field_values?.[activeIndex]?.text_value ?? ''}
+          [attrSchema.cmsAttr]: {value: activeFieldValue?.text_value ?? ''}
         };
       }
       if (attrSchema._type === 'RichTextField') {
         return {
-          [attr]: {
-            value: fieldValues[attrSchema.attr]?.[0].field_values?.[activeIndex]?.rich_text_value ?? ''
-          }
+          [attrSchema.cmsAttr]: {value: activeFieldValue?.rich_text_value ?? ''}
         };
       }
       if (attrSchema._type === 'URLField') {
         return {
-          [attr]: {value: fieldValues[attrSchema.attr]?.[0].field_values?.[activeIndex]?.url ?? undefined}
+          [attrSchema.cmsAttr]: {value: activeFieldValue?.url ?? undefined}
         };
       }
       if (attrSchema._type === 'ChoiceField') {
         return {
-          [attr]: {value: fieldValues[attrSchema.attr]?.[0].field_values?.[activeIndex]?.choice_key ?? undefined}
+          [attrSchema.cmsAttr]: {value: activeFieldValue?.choice_key ?? undefined}
         };
       }
       if (attrSchema._type === 'AssetField') {
-        const asset = fieldValues[attrSchema.attr]?.[0].field_values?.[activeIndex];
-        if (asset) {
-          const url = await getAssetURL(token, asset.links.self);
+        if (activeFieldValue) {
+          const url = await getAssetURL(apiToken, activeFieldValue.links.self);
           return {
-            [attr]: {value: url}
+            [attrSchema.cmsAttr]: {value: url}
           };
         }
       }
