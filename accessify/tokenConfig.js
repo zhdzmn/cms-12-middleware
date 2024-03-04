@@ -1,13 +1,18 @@
 export const defaultMapping = {
-  'Omnichannel Editor': {
+  'Opti Marketing Blog Post': {
     'mapping': {
-      'body': { '_type': 'RichTextField', 'cmsAttr': 'mainBody' },
-      'metaTitle': { '_type': 'TextField', 'cmsAttr': 'metaTitle' },
-      'metaDescription': { '_type': 'TextField', 'cmsAttr': 'pageDescription' },
-      'author': { '_type': 'TextField', 'cmsAttr': 'authorMetaData' },
-      'title': { '_type': 'TextField', 'cmsAttr': 'name' }
+      'heading': { '_type': 'RichTextField', 'cmsAttr': 'Heading' },
+      'mainBody': { '_type': 'TextField', 'cmsAttr': 'MainBody' },
+      'promo': {
+        '_type': 'Component',
+        'map': {
+          'description': { '_type': 'TextField', 'cmsAttr': 'PromoText' },
+          'title': { '_type': 'TextField', 'cmsAttr': 'PromoHeading' },
+          'image': { '_type': 'AssetField', 'cmsAttr': 'PromoImage' },
+        }
+      }
     },
-    'parentFolder': 639,
-    'contentType': 'StandardPage'
+    'parentFolder': 8386,
+    'contentType': 'Blog Post Page'
   }
 };
