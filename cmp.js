@@ -1,9 +1,7 @@
 import axios from 'axios';
 
 function ensureLocalAPIURL(url) {
-  return process.env.NODE_ENV === 'development'
-    ? url.replace('https://api.welcomesoftware.com', 'https://api-localdev.newscred.com:5111')
-    : url;
+  return url;
 }
 
 export async function getToken(clientId, clientSecret) {
