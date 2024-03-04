@@ -46,6 +46,21 @@ export default class CMS12 {
     });
     return createContentResponse.data.contentLink;
   }
+  async getContent(contentGuid) {
+    const createContentResponse = await axios.get(
+      `${this.baseURL}/api/episerver/v3.0/contentmanagement/${contentGuid}`,
+      {
+        headers: {
+          'authorization': `${this.token.type} ${this.token.value}`,
+          'Content-Type': 'application/json'
+        }
+      }
+    );
+    appLogger.info({
+      data: createContentResponse.data
+    });
+    return createContentResponse.data;
+  }
   async amendContent(contentId, data) {
     const amendContentReponse = await axios.put(
       `${this.baseURL}/api/episerver/v3.0/contentmanagement/${contentId}`,
