@@ -1,18 +1,18 @@
 export const defaultMapping = {
   'Opti Marketing Blog Post': {
     'mapping': {
-      'heading': { '_type': 'RichTextField', 'cmsAttr': 'Heading' },
-      'mainBody': { '_type': 'TextField', 'cmsAttr': 'MainBody' },
+      'heading': { '_type': 'TextField', 'cmsAttr': 'heading' },
+      'mainBody': { '_type': 'RichTextField', 'cmsAttr': 'mainBody' },
       'promo': {
         '_type': 'Component',
         'map': {
-          'description': { '_type': 'TextField', 'cmsAttr': 'PromoText' },
-          'title': { '_type': 'TextField', 'cmsAttr': 'PromoHeading' },
-          'image': { '_type': 'AssetField', 'cmsAttr': 'PromoImage' },
+          'description': { '_type': 'TextField', 'cmsAttr': 'promoText' },
+          'longTitle': { '_type': 'TextField', 'cmsAttr': 'promoHeading' },
+          'promoImage': { '_type': 'AssetField', 'cmsAttr': 'promoImage' },
         }
       }
     },
-    'parentFolder': 8386,
-    'contentType': 'Blog Post Page'
+    'parentFolder': 4724531,
+    'contentType': 'BlogPostPage'
   }
 };

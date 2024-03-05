@@ -52,6 +52,11 @@ export async function publish(req, res) {
   cmsData.status = 'Published';
   cmsData.parentLink = {id: contentType.parentFolder};
   cmsData.name = cmsData.name?.value || payload.data.assets?.structured_contents[0]?.content_body.title;
+  cmsData.date = { value: (new Date()).toISOString().split('.')[0] + 'Z', propertyDataType: "PropertyDate" };
+
+  cmsData.categories = {
+    value: [{ id: 44122 }]
+  };
 
   // initialize cms12 cli
   const cms12 = new CMS12(
@@ -69,7 +74,7 @@ export async function publish(req, res) {
 
   await cms12.initialize();
 
-  const { url, guidValue} = await cms12.createContent(cmsData);
+  const { url } = await cms12.createContent(cmsData);
 
   await postPublicAPI(token, payload.data.publishing_event.links.publishing_metadata, {
     data: [{
@@ -131,6 +136,11 @@ export async function generatePreview(req, res) {
   cmsData.status = 'Published';
   cmsData.parentLink = {id: contentType.parentFolder};
   cmsData.name = cmsData.name?.value || payload.data.assets?.structured_contents[0]?.content_body.title;
+  cmsData.date = { value: (new Date()).toISOString().split('.')[0] + 'Z', propertyDataType: "PropertyDate" };
+
+  cmsData.categories = {
+    value: [{ id: 44122 }]
+  };
 
   // initialize cms12 cli
   const cms12 = new CMS12(
@@ -148,18 +158,20 @@ export async function generatePreview(req, res) {
 
   await cms12.initialize();
 
-  const { url, guidValue} = await cms12.createContent(cmsData);
+  // cmsData.promoImage = { value: {id: '4525741'} };
+
+  const { url, id: cmsContentId } = await cms12.createContent(cmsData);
 
   // send complete api call to the openapi
   await postPublicAPI(token, payload.data.links.complete, {
     keyedPreviews: {
-      [`cms12-page-${uuidv4()}`]: url
+      [`cms12-page-${cmsContentId}`]: url
     },
   });
 
   // remove preview page
   setTimeout(async () => {
-    cms12.deleteContent(guidValue).then(() => {
+    cms12.deleteContent(cmsContentId).then(() => {
       appLogger.info('removed preview completed');
     }).catch(err => appLogger.error({err}, 'failed to remove the post'));
   }, config.PREVIEW_ALIVE_TIMEOUT * 1000);
