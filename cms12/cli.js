@@ -1,10 +1,10 @@
 import url from 'url';
 import axios from 'axios';
-import { appLogger } from '../logger.js';
 
 export default class CMS12 {
   constructor(baseURL, clientId, clientSecret, orgId) {
     this.baseURL = baseURL;
+    this.apiURL = `${baseURL}/_cms/preview1`;
     this.clientId = clientId;
     this.clientSecret = clientSecret;
     this.orgId = orgId;
@@ -14,20 +14,36 @@ export default class CMS12 {
     this.token = await this.generateToken();
   }
 
+  getAuthHeader() {
+    return {
+      'Authorization': `${this.token.type} ${this.token.value}`,
+    };
+  }
+
+  async doGet(relativeURL, additionalHeader = {}) {
+    const getResponse = await axios.get(
+      `${this.baseURL}/${relativeURL}`,
+      {
+        headers: {
+          ...this.getAuthHeader(),
+          ...additionalHeader,
+          'Content-Type': 'application/json',
+        }
+      }
+    );
+    return getResponse.data;
+  }
+
   async generateToken() {
     const tokenAPIResponse = await axios.post(
-      `${this.baseURL}/api/episerver/connect/token`,
-      new url.URLSearchParams({
+      `${this.apiURL}/oauth/token`,
+      {
         grant_type: 'client_credentials',
         client_id: this.clientId,
-        client_secret: this.clientSecret,
-        scope: 'epi_content_definitions epi_content_management'
-      }).toString(),
-      {headers: {'content-type': 'application/x-www-form-urlencoded'}}
+        client_secret: this.clientSecret
+      },
+      {headers: {'content-type': 'application/json'}}
     );
-    appLogger.info({
-      data: tokenAPIResponse.data
-    }, 'generated token data');
     return {
       value: tokenAPIResponse.data.access_token,
       type: tokenAPIResponse.data.token_type
@@ -36,86 +52,81 @@ export default class CMS12 {
 
   async createContent(data) {
     const createContentResponse = await axios.post(
-      `${this.baseURL}/api/episerver/v3.0/contentmanagement`,
+      `${this.apiURL}/content?skipValidation=true`,
       data,
       {
         headers: {
-          'Authorization': `${this.token.type} ${this.token.value}`,
+          ...this.getAuthHeader(),
           'Content-Type': 'application/json',
           'x-epi-validation-mode': 'minimal'
         }
       }
     );
-    appLogger.info({
-      data: createContentResponse.data
-    });
-    return createContentResponse.data.contentLink;
+
+    const content = createContentResponse.data;
+    const { url } = await this.doGet(
+      `api/orchestrate/content/${content.key}/${content.version}/language/${content.locale}/endpoints`
+    );
+    const contentURL = new URL(url);
+    contentURL.host = 'int.optimizely.com';
+    content.url = contentURL.href;
+    return content;
   }
 
   async getContent(contentGuid) {
-    const createContentResponse = await axios.get(
-      `${this.baseURL}/api/episerver/v3.0/contentmanagement/${contentGuid}`,
-      {
-        headers: {
-          'Authorization': `${this.token.type} ${this.token.value}`,
-          'Content-Type': 'application/json',
-          'Accept-Language': 'en'
-        }
-      }
+    const response = await this.doGet(
+      `content/${contentGuid}`,
+      { 'Accept-Language': 'en' }
     );
-    appLogger.info({
-      data: createContentResponse.data
-    });
-    return createContentResponse.data;
+    return response;
   }
 
-  async amendContent(contentId, data) {
-    const amendContentReponse = await axios.put(
-      `${this.baseURL}/api/episerver/v3.0/contentmanagement/${contentId}`,
+  async patchContent(contentId, data) {
+    const response = await axios.patch(
+      `${this.apiURL}/content/${contentId}`,
       data,
       {
         headers: {
+          ...this.getAuthHeader(),
+          'Content-Type': 'application/json'
+        }
+      }
+    );
+    return response.data;
+  }
+
+  async createAssetContainer(asset, assetType) {
+    const response = await axios.post(
+      `${this.baseURL}/cmpdam/getorcreatedamasset`,
+      {
+        externalUrl: asset.url,
+        title: asset.title,
+        assetType,
+        altText: asset.alt,
+        width: asset.width,
+        height: asset.height,
+        assetGuid: asset.guid
+      },
+      {
+        headers: {
           'Authorization': `${this.token.type} ${this.token.value}`,
           'Content-Type': 'application/json'
         }
       }
     );
-    appLogger.info({
-      data: amendContentReponse.data
-    });
-    return amendContentReponse.data.url;
-  }
-
-  async createAssetContent(assetUrl, title, mimeType) {
-    const createContentResponse = await axios.post(
-      `${this.baseURL}/api/episerver/v3.0/contentmanagement/damidentities`,
-      {assetUrl, title, mimeType},
-      {
-        headers: {
-          'Authorization': `${this.token.type} ${this.token.value}`,
-          'Content-Type': 'application/json',
-          'x-epi-validation-mode': 'minimal'
-        }
-      }
-    );
-    appLogger.info({
-      data: createContentResponse.data
-    }, 'created asset container');
-    return createContentResponse.data.contentLink;
+    return `cms://content/${response.data.guid.split('-').join('')}`;
   }
 
   async deleteContent(guid) {
-    const deleteResponse = await axios.delete(
-      `${this.baseURL}/api/episerver/v3.0/contentmanagement/${guid}`,
+    const response = await axios.delete(
+      `${this.apiURL}/content/${guid}`,
       {
         headers: {
-          'Authorization': `${this.token.type} ${this.token.value}`,
+          ...this.getAuthHeader(),
           'Content-Type': 'application/json'
         }
       }
     );
-    appLogger.info({
-      data: deleteResponse.data
-    });
+    return response.data;
   }
 };

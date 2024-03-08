@@ -1,4 +1,4 @@
-import { getAssetURL } from "../cmp.js";
+import { getAsset } from "../cmp.js";
 
 function mergeTokenData(listResults) {
   let returnVal = {};
@@ -11,7 +11,7 @@ function mergeTokenData(listResults) {
   return returnVal;
 }
 
-export async function prepareCMSData(fieldValues, valueMapping, apiToken) {
+export async function prepareCMSData(fieldValues, valueMapping, apiToken, cms12CLI) {
   if (!fieldValues) { return; }
   const results = await Promise.all(Object.entries(valueMapping).map(
     async ([attr, attrSchema]) => {
@@ -31,36 +31,45 @@ export async function prepareCMSData(fieldValues, valueMapping, apiToken) {
           return prepareCMSData(
             activeFieldValue?.content_details.latest_fields_version?.fields,
             {[_attr]: _attrSchema},
-            apiToken
+            apiToken,
+            cms12CLI
           );
         }));
         return mergeTokenData(listResults);
       }
       if (attrSchema._type === 'TextField') {
         return {
-          [attrSchema.cmsAttr]: {value: activeFieldValue?.text_value ?? ''}
+          [attrSchema.cmsAttr]: activeFieldValue?.text_value ?? ''
         };
       }
       if (attrSchema._type === 'RichTextField') {
         return {
-          [attrSchema.cmsAttr]: {value: activeFieldValue?.rich_text_value ?? ''}
+          [attrSchema.cmsAttr]: activeFieldValue?.rich_text_value ?? ''
         };
       }
       if (attrSchema._type === 'URLField') {
         return {
-          [attrSchema.cmsAttr]: {value: activeFieldValue?.url ?? undefined}
+          [attrSchema.cmsAttr]: activeFieldValue?.url ?? undefined
         };
       }
       if (attrSchema._type === 'ChoiceField') {
         return {
-          [attrSchema.cmsAttr]: {value: activeFieldValue?.choice_key ?? undefined}
+          [attrSchema.cmsAttr]: activeFieldValue?.choice_key ?? undefined
         };
       }
       if (attrSchema._type === 'AssetField') {
         if (activeFieldValue) {
-          const url = await getAssetURL(apiToken, activeFieldValue.links.self);
+          const asset = await getAsset(apiToken, activeFieldValue.links.self);
+          const containerRef = await cms12CLI.createAssetContainer({
+            url: asset.url,
+            title: asset.title,
+            alt: asset.title,
+            width: asset.image_resolution?.width,
+            height: asset.image_resolution?.height,
+            guid: asset.id
+          }, 'image');
           return {
-            [attrSchema.cmsAttr]: {value: url}
+            [attrSchema.cmsAttr]: containerRef
           };
         }
       }

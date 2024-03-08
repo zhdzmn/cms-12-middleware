@@ -97,7 +97,6 @@ export async function generatePreview(req, res) {
   appLogger.info('Generating preview');
   const contentTypeName = payload.data.assets?.structured_contents[0].content_body.content_type.name;
   const orgId = payload.data.organization.id;
-  appLogger.info(payload.data.assets?.structured_contents[0].content_body.content_type);
   const accessify = new Accessify(orgId);
   const contentTypeMapping = await accessify.getContentTypeMapping();
   if (!contentTypeMapping.hasOwnProperty(contentTypeName)) {
@@ -126,21 +125,7 @@ export async function generatePreview(req, res) {
     acknowledged_by: "cms-12-middleware",
     content_hash: hash,
   });
-  appLogger.info({url: payload.data.links.acknowledge}, 'preview acknowledged');
-
-  // prepare cms12 data
-  const cmsData = await prepareCMSData(fieldsWithLocal, contentType.mapping, token);
-  appLogger.debug({cmsData}, 'prepared cms data');
-  cmsData.language = { 'name': 'en' };
-  cmsData.contentType = [contentType.contentType];
-  cmsData.status = 'Published';
-  cmsData.parentLink = {id: contentType.parentFolder};
-  cmsData.name = cmsData.name?.value || payload.data.assets?.structured_contents[0]?.content_body.title;
-  cmsData.date = { value: (new Date()).toISOString().split('.')[0] + 'Z', propertyDataType: "PropertyDate" };
-
-  cmsData.categories = {
-    value: [{ id: 44122 }]
-  };
+  appLogger.info('preview acknowledged');
 
   // initialize cms12 cli
   const cms12 = new CMS12(
@@ -158,20 +143,33 @@ export async function generatePreview(req, res) {
 
   await cms12.initialize();
 
-  // cmsData.promoImage = { value: {id: '4525741'} };
-
-  const { url, id: cmsContentId } = await cms12.createContent(cmsData);
-
+  // prepare cms12 data
+  const properties = await prepareCMSData(fieldsWithLocal, contentType.mapping, token, cms12);
+  properties.date = (new Date()).toISOString().split('.')[0] + 'Z';
+  properties.categories = contentType.categories.map(category => `cms://content/${category}`);
+  const cmsData = {
+    properties,
+    container: contentType.container,
+    displayName: properties.name || payload.data.assets?.structured_contents[0]?.content_body.title,
+    status: 'published',
+    locale: 'en',
+    contentType: contentType.contentType,
+    key: uuidv4().split('-').join(''),
+  };
+  // appLogger.debug(cmsData, 'prepared cms data');
+  
+  const cmsContent = await cms12.createContent(cmsData);
+  appLogger.debug(cmsContent, 'cms content');
+  
   // send complete api call to the openapi
   await postPublicAPI(token, payload.data.links.complete, {
     keyedPreviews: {
-      [`cms12-page-${cmsContentId}`]: url
+      [`${cmsContent.routeSegment}-${cmsContent.key}`]: cmsContent.url
     },
   });
 
-  // remove preview page
   setTimeout(async () => {
-    cms12.deleteContent(cmsContentId).then(() => {
+    cms12.deleteContent(cmsContent.key).then(() => {
       appLogger.info('removed preview completed');
     }).catch(err => appLogger.error({err}, 'failed to remove the post'));
   }, config.PREVIEW_ALIVE_TIMEOUT * 1000);

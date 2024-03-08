@@ -19,6 +19,12 @@ function catchAll(func, errMsg) {
 }
 
 const app = express();
+// app.use((req, res, next) => {
+//   if (req.originalUrl !== '/_status') {
+//     PinoHttp()(req, res, next);
+//   }
+//   next();
+// });
 app.use(PinoHttp());
 app.set('port', process.env.SERVER_PORT);
 app.use(express.json({limit: '2mb'}));

@@ -1,9 +1,5 @@
 import axios from 'axios';
 
-function ensureLocalAPIURL(url) {
-  return url;
-}
-
 export async function getToken(clientId, clientSecret) {
   const tokenData = {
     client_id: clientId,
@@ -24,7 +20,7 @@ export async function getToken(clientId, clientSecret) {
 
 export async function postPublicAPI(token, url, data) {
   const previewApiResponse = await axios.post(
-    ensureLocalAPIURL(url),
+    url,
     data,
     {
       headers: {
@@ -37,13 +33,18 @@ export async function postPublicAPI(token, url, data) {
 };
 
 export async function getAssetURL(token, link) {
+  const asset = await getAsset(token, link);
+  return asset.url;
+};
+
+export async function getAsset(token, link) {
   const previewApiResponse = await axios.get(
-    ensureLocalAPIURL(link),
+    link,
     {
       headers: {
         'authorization': `Bearer ${token}`
       }
     }
   );
-  return previewApiResponse.data.url;
+  return previewApiResponse.data;
 };
