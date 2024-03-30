@@ -13,7 +13,7 @@ export const defaultMapping = {
       }
     },
     'contentType': 'BlogPostPage',
-    'container': '422a775961654cca91783eef8f701dcc',
+    'container': '70f3c6040a3f4011aa2bcc20a66a09b9',
     'categories': ['62f3bda188974d819da62cc0a937617e']
   }
 };

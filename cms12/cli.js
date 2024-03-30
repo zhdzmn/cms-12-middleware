@@ -1,13 +1,12 @@
-import url from 'url';
 import axios from 'axios';
 
+
 export default class CMS12 {
-  constructor(baseURL, clientId, clientSecret, orgId) {
+  constructor(baseURL, clientId, clientSecret) {
     this.baseURL = baseURL;
     this.apiURL = `${baseURL}/_cms/preview1`;
     this.clientId = clientId;
     this.clientSecret = clientSecret;
-    this.orgId = orgId;
   }
 
   async initialize() {
@@ -20,9 +19,24 @@ export default class CMS12 {
     };
   }
 
-  async doGet(relativeURL, additionalHeader = {}) {
+  async doGet(relativeURL, additionalHeader = {}, integrationAPI = true) {
     const getResponse = await axios.get(
-      `${this.baseURL}/${relativeURL}`,
+      `${integrationAPI ? this.apiURL : this.baseURL}/${relativeURL}`,
+      {
+        headers: {
+          ...this.getAuthHeader(),
+          ...additionalHeader,
+          'Content-Type': 'application/json',
+        }
+      }
+    );
+    return getResponse.data;
+  }
+
+  async doPost(relativeURL, data, additionalHeader = {}, integrationAPI = true) {
+    const getResponse = await axios.post(
+      `${integrationAPI ? this.apiURL : this.baseURL}/${relativeURL}`,
+      data,
       {
         headers: {
           ...this.getAuthHeader(),
@@ -50,54 +64,35 @@ export default class CMS12 {
     };
   }
 
-  async createContent(data) {
-    const createContentResponse = await axios.post(
-      `${this.apiURL}/content?skipValidation=true`,
-      data,
-      {
-        headers: {
-          ...this.getAuthHeader(),
-          'Content-Type': 'application/json',
-          'x-epi-validation-mode': 'minimal'
-        }
-      }
-    );
-
-    const content = createContentResponse.data;
+  async getContentURL(contentKey, versionId, locale) {
     const { url } = await this.doGet(
-      `api/orchestrate/content/${content.key}/${content.version}/language/${content.locale}/endpoints`
+      `api/orchestrate/content/${contentKey}/${versionId}/language/${locale}/endpoints`,
+      {},
+      false
     );
     const contentURL = new URL(url);
-    contentURL.host = 'int.optimizely.com';
-    content.url = contentURL.href;
+    contentURL.host = new URL(process.env.CMS_URL).host;
+    return contentURL.href;
+  }
+
+  async createContent(data) {
+    const content = await this.doPost(
+      'content?skipValidation=true',
+      data
+    );
+    content.url = await this.getContentURL(content.key, content.version, content.locale);;
     return content;
   }
 
-  async getContent(contentGuid) {
-    const response = await this.doGet(
-      `content/${contentGuid}`,
-      { 'Accept-Language': 'en' }
+  getContent(contentGuid) {
+    return this.doGet(
+      `content/${contentGuid}`
     );
-    return response;
-  }
-
-  async patchContent(contentId, data) {
-    const response = await axios.patch(
-      `${this.apiURL}/content/${contentId}`,
-      data,
-      {
-        headers: {
-          ...this.getAuthHeader(),
-          'Content-Type': 'application/json'
-        }
-      }
-    );
-    return response.data;
   }
 
   async createAssetContainer(asset, assetType) {
-    const response = await axios.post(
-      `${this.baseURL}/cmpdam/getorcreatedamasset`,
+    const response = await this.doPost(
+      `cmpdam/getorcreatedamasset`,
       {
         externalUrl: asset.url,
         title: asset.title,
@@ -107,14 +102,10 @@ export default class CMS12 {
         height: asset.height,
         assetGuid: asset.guid
       },
-      {
-        headers: {
-          'Authorization': `${this.token.type} ${this.token.value}`,
-          'Content-Type': 'application/json'
-        }
-      }
+      {},
+      false
     );
-    return `cms://content/${response.data.guid.split('-').join('')}`;
+    return `cms://content/${response.guid.split('-').join('')}`;
   }
 
   async deleteContent(guid) {
