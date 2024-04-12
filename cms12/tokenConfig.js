@@ -8,7 +8,7 @@ export const defaultMapping = {
         'map': {
           'description': { '_type': 'TextField', 'cmsAttr': 'promoText' },
           'title': { '_type': 'TextField', 'cmsAttr': 'promoHeading' },
-          'image': { '_type': 'AssetField', 'cmsAttr': 'promoImage' },
+          // 'image': { '_type': 'AssetField', 'cmsAttr': 'promoImage' },
         }
       }
     },
