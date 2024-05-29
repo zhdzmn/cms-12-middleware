@@ -91,12 +91,17 @@ export default class CMS12 {
   }
 
   async createAssetContainer(asset, assetType) {
+    const assetTypeMap = {
+      image: 0,
+      video: 1,
+      rawFile: 2
+    };
     const response = await this.doPost(
       `cmpdam/getorcreatedamasset`,
       {
         externalUrl: asset.url,
         title: asset.title,
-        assetType,
+        assetType: assetTypeMap[assetType],
         altText: asset.alt,
         width: asset.width,
         height: asset.height,

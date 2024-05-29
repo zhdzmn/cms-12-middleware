@@ -1,19 +1,36 @@
 export const defaultMapping = {
-  'Opti Marketing Blog Post': {
-    'mapping': {
-      'heading': { '_type': 'TextField', 'cmsAttr': 'heading' },
-      'mainBody': { '_type': 'RichTextField', 'cmsAttr': 'mainBody' },
-      'promo': {
-        '_type': 'Component',
-        'map': {
-          'description': { '_type': 'TextField', 'cmsAttr': 'promoText' },
-          'title': { '_type': 'TextField', 'cmsAttr': 'promoHeading' },
-          // 'image': { '_type': 'AssetField', 'cmsAttr': 'promoImage' },
-        }
-      }
-    },
-    'contentType': 'BlogPostPage',
-    'container': '70f3c6040a3f4011aa2bcc20a66a09b9',
-    'categories': ['62f3bda188974d819da62cc0a937617e']
+  "DEMO: Mosey Blog page": {
+      "container": "e94dbb783d5f4aecaab9a648546c1652",
+      "mapping": {
+          "author": {
+              "_type": "TextField",
+              "cmsAttr": "authorMetaData"
+          },
+          "releaseSummary": {
+              "_type": "Component",
+              "map": {
+                  "overview": {
+                      "_type": "TextField",
+                      "cmsAttr": "teaserText"
+                  },
+                  "image": {
+                      "_type": "AssetField",
+                      "cmsAttr": "backgroundImage"
+                  },
+                  "title": {
+                      "_type": "TextField",
+                      "cmsAttr": "metaTitle"
+                  },
+                  "featureInformation": {
+                      "_type": "RichTextField",
+                      "cmsAttr": "mainBody"
+                  }
+              }
+          }
+      },
+      "categories": [
+          "145621f30ab94e4f811053750e3ae487"
+      ],
+      "contentType": "StandardPage"
   }
 };

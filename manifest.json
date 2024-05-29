@@ -1,0 +1,29 @@
+{
+    "name": "Demo Site CMS 12 Middleware",
+    "description": "CMS 12 Omni Integration for demo site",
+    "parameters": {
+        "CMS_URL": {
+            "label": "CMS URL",
+            "type": "string",
+            "required": true
+        },
+        "CMS12_CLIENT_ID": {
+            "label": "CMS Client ID",
+            "type": "string",
+            "required": true
+        },
+        "CMS12_CLIENT_SECRET": {
+            "label": "CMS Client Secret",
+            "type": "string",
+            "required": true
+        }
+    },
+    "webhooks": {
+        "preview": {
+            "description": "Preview Webhook for Demo CMS12",
+            "secret": "preview_secret",
+            "endpoint": "/preview/callback",
+            "event_names": ["content_preview_requested"]
+        }
+    }
+}

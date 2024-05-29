@@ -55,6 +55,7 @@ export async function generatePreview(req, res) {
   const structuredContent = payload.data.assets?.structured_contents[0];
   const fieldsWithLocal = structuredContent?.content_body.fields_version.fields ?? {};
   appLogger.info('Generating preview');
+  appLogger.info(contentTypeMapping);
   const contentTypeName = structuredContent?.content_body.content_type.name ?? '';
   if (!contentTypeMapping.hasOwnProperty(contentTypeName)) {
     appLogger.error({
@@ -103,20 +104,26 @@ async function createCMSContent(token, fieldsWithLocal, contentType, title) {
     process.env.CMS12_CLIENT_ID,
     process.env.CMS12_CLIENT_SECRET,
   );
+
+  try {
+    await cms12.initialize();
+  } catch (err) {
+    appLogger.info({err}, 'There is an ERROR !!!!');
+    throw err;
+  }
+
   appLogger.info({
     url: process.env.CMS_URL
   }, 'cms12 cli initiated');
 
-  await cms12.initialize();
-
   // prepare cms12 data
   const properties = await prepareCMSData(fieldsWithLocal, contentType.mapping, token, cms12);
-  properties.date = (new Date()).toISOString().split('.')[0] + 'Z';
+  // properties.date = (new Date()).toISOString().split('.')[0] + 'Z';
   properties.categories = contentType.categories.map(category => `cms://content/${category}`);
   const cmsData = {
     properties,
     container: contentType.container,
-    displayName: properties.name || title || 'Untitled',
+    displayName: properties.metaTitle || title || 'Untitled',
     status: 'published',
     locale: 'en',
     contentType: contentType.contentType,
