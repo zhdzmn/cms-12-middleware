@@ -119,7 +119,7 @@ async function createCMSContent(token, fieldsWithLocal, contentType, title) {
   // prepare cms12 data
   const properties = await prepareCMSData(fieldsWithLocal, contentType.mapping, token, cms12);
   // properties.date = (new Date()).toISOString().split('.')[0] + 'Z';
-  properties.categories = contentType.categories.map(category => `cms://content/${category}`);
+  // properties.categories = contentType.categories.map(category => `cms://content/${category}`);
   const cmsData = {
     properties,
     container: contentType.container,
