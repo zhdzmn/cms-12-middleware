@@ -3,15 +3,20 @@ import { appLogger } from '../logger.js';
 import { getToken, postPublicAPI } from '../cmp.js';
 import { prepareCMSData } from './tokenMapper.js';
 import CMS12 from './cli.js';
-import { defaultMapping as contentTypeMapping } from './tokenConfig.js';
-
+import Accessify from '../accessify/index.js';
 
 export async function publish(req, res) {
   const payload = req.body;
   const structuredContent = payload.data.assets?.structured_contents[0];
   const fieldsWithLocal = structuredContent.content_body.latest_fields_version.fields ?? {};
-  appLogger.info('Generating preview');
+  appLogger.info('publishing content');
   const contentTypeName = structuredContent?.content_body.content_type.name ?? '';
+
+  // get app token for open api calls
+  const token = await getToken(process.env.APP_CLIENT_ID, process.env.APP_CLIENT_SECRET);
+  appLogger.info('generated Token');
+  const accessify = new Accessify(token);
+  const contentTypeMapping = await accessify.getContentTypeMapping();
 
   if (!contentTypeMapping.hasOwnProperty(contentTypeName)) {
     appLogger.error({
@@ -23,10 +28,6 @@ export async function publish(req, res) {
 
   const structuredContentId = structuredContent.id;
   const contentType = contentTypeMapping[contentTypeName];
-
-  // get app token for open api calls
-  const token = await getToken(process.env.APP_CLIENT_ID, process.env.APP_CLIENT_SECRET);
-  appLogger.info('generated Token');
 
   const cmsContent = await createCMSContent(
     token,
@@ -55,8 +56,14 @@ export async function generatePreview(req, res) {
   const structuredContent = payload.data.assets?.structured_contents[0];
   const fieldsWithLocal = structuredContent?.content_body.fields_version.fields ?? {};
   appLogger.info('Generating preview');
-  appLogger.info(contentTypeMapping);
   const contentTypeName = structuredContent?.content_body.content_type.name ?? '';
+
+  // get app token for open api calls
+  const token = await getToken(process.env.APP_CLIENT_ID, process.env.APP_CLIENT_SECRET);
+  appLogger.info('generated Token');
+  const accessify = new Accessify(token);
+  const contentTypeMapping = await accessify.getContentTypeMapping();
+
   if (!contentTypeMapping.hasOwnProperty(contentTypeName)) {
     appLogger.error({
       contentTypeName,
@@ -67,10 +74,6 @@ export async function generatePreview(req, res) {
     });
   }
   const contentType = contentTypeMapping[contentTypeName];
-
-  // get app token for open api calls
-  const token = await getToken(process.env.APP_CLIENT_ID, process.env.APP_CLIENT_SECRET);
-  appLogger.info('generated Token');
 
   // acknowledge the preview request
   await postPublicAPI(token, payload.data.links.acknowledge, {

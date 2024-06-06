@@ -16,6 +16,11 @@
             "label": "CMS Client Secret",
             "type": "string",
             "required": true
+        },
+        "CONTENT_TYPE_MAPPING": {
+            "label": "CMP<>CMS Content Type Mapping",
+            "type": "json",
+            "required": true
         }
     },
     "webhooks": {
