@@ -33,7 +33,8 @@ export async function publish(req, res) {
     token,
     fieldsWithLocal,
     contentType,
-    structuredContent?.content_body.title
+    structuredContent?.content_body.title,
+    true
   );
 
   await postPublicAPI(token, payload.data.publishing_event.links.publishing_metadata, {
@@ -100,7 +101,7 @@ export async function generatePreview(req, res) {
   return res.status(200).json({success: true});
 };
 
-async function createCMSContent(token, fieldsWithLocal, contentType, title) {
+async function createCMSContent(token, fieldsWithLocal, contentType, title, publishToMainFolder = false) {
   // initialize cms12 cli
   const cms12 = new CMS12(
     process.env.CMS_URL,
@@ -121,11 +122,10 @@ async function createCMSContent(token, fieldsWithLocal, contentType, title) {
 
   // prepare cms12 data
   const properties = await prepareCMSData(fieldsWithLocal, contentType.mapping, token, cms12);
-  // properties.date = (new Date()).toISOString().split('.')[0] + 'Z';
-  // properties.categories = contentType.categories.map(category => `cms://content/${category}`);
+  properties.categories = contentType.categories.map(category => `cms://content/${category}`);
   const cmsData = {
     properties,
-    container: contentType.container,
+    container: (publishToMainFolder ? contentType.publishContainer : contentType.previewContainer) || contentType.container,
     displayName: properties.metaTitle || title || 'Untitled',
     status: 'published',
     locale: 'en',
@@ -137,11 +137,13 @@ async function createCMSContent(token, fieldsWithLocal, contentType, title) {
   const cmsContent = await cms12.createContent(cmsData);
   appLogger.debug(cmsContent, 'CMS content');
 
-  setTimeout(async () => {
-    cms12.deleteContent(cmsContent.key).then(() => {
-      appLogger.info('removed preview completed');
-    }).catch(err => appLogger.error({err}, 'failed to remove the post'));
-  }, process.env.PREVIEW_ALIVE_TIMEOUT * 1000);
+  if (!publishToMainFolder) {
+    setTimeout(async () => {
+      cms12.deleteContent(cmsContent.key).then(() => {
+        appLogger.info('removed preview completed');
+      }).catch(err => appLogger.error({err}, 'failed to remove the post'));
+    }, process.env.PREVIEW_ALIVE_TIMEOUT * 1000);
+  }
 
   return cmsContent;
 }
