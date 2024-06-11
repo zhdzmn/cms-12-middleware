@@ -29,6 +29,13 @@
             "secret": "preview_secret",
             "endpoint": "/preview/callback",
             "event_names": ["content_preview_requested"]
+        },
+        "publishing": {
+            "description": "Publishing Webhook for Demo CMS12",
+            "secret": "publishing_secret",
+            "endpoint": "/publishing/callback",
+            "event_names": ["content_preview_requested"]
         }
+
     }
 }
