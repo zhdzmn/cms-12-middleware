@@ -101,7 +101,7 @@ export async function generatePreview(req, res) {
   return res.status(200).json({success: true});
 };
 
-async function createCMSContent(token, fieldsWithLocal, contentType, title, publishToMainFolder = false) {
+async function createCMSContent(token, fieldsWithLocal, contentType, title, publishToMainFolder) {
   // initialize cms12 cli
   const cms12 = new CMS12(
     process.env.CMS_URL,
