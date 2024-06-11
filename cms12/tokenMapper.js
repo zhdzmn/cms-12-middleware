@@ -57,6 +57,11 @@ export async function prepareCMSData(fieldValues, valueMapping, apiToken, cms12C
           [attrSchema.cmsAttr]: activeFieldValue?.choice_key ?? undefined
         };
       }
+      if (attrSchema._type === 'DateField') {
+        return {
+          [attrSchema.cmsAttr]: activeFieldValue?.datetime_value ?? undefined
+        };
+      }
       if (attrSchema._type === 'AssetField') {
         if (activeFieldValue) {
           const asset = await getAsset(apiToken, activeFieldValue.links.self);
