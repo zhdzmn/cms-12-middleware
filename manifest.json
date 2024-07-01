@@ -14,7 +14,7 @@
         },
         "CMS12_CLIENT_SECRET": {
             "label": "CMS Client Secret",
-            "type": "string",
+            "type": "secret",
             "required": true
         },
         "CONTENT_TYPE_MAPPING": {
