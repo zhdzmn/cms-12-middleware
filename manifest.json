@@ -9,12 +9,12 @@
         },
         "CMS12_CLIENT_ID": {
             "label": "CMS Client ID",
-            "type": "string",
+            "type": "secret",
             "required": true
         },
         "CMS12_CLIENT_SECRET": {
             "label": "CMS Client Secret",
-            "type": "string",
+            "type": "secret",
             "required": true
         },
         "CONTENT_TYPE_MAPPING": {
